@@ -3,22 +3,23 @@ const cors = require("cors");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
 
 // middleware
 app.use(cors({
-  origin: ["http://localhost:5173", "https://coffee-store-1e1e7.web.app"],
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  withCredentials: true,
+  origin: ['https://coffee-store-1e1e7.web.app', 'http://localhost:5176', 'https://regal-muffin-a29d10.netlify.app', 'https://taupe-zabaione-bdde0b.netlify.app', 'http://practice-coffee-client.surge.sh', 'http://localhost:5173', 'http://localhost:4173'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
 }));
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Hello World");
-});
 
 const uri =
-  "mongodb+srv://practiceCoffee:6tOUvpJsRY4iMpCm@cluster0.0rmazcr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0rmazcr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
