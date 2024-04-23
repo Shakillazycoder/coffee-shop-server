@@ -6,7 +6,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // middleware
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "https://coffee-store-1e1e7.web.app"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  withCredentials: true,
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -28,9 +32,9 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
     const database = client.db("practiceCoffeeDB");
     const practiceCoffeeCollection = database.collection("practiceCoffee");
+    const userCollection = database.collection("user");
 
     // data create
     app.post("/coffees", async (req, res) => {
@@ -78,7 +82,7 @@ async function run() {
           taste: updateCoffee.taste,
           category: updateCoffee.category,
           details: updateCoffee.details,
-          photo: updateCoffee.photo,
+          phone: updateCoffee.phone,
         },
       };
       const result = await practiceCoffeeCollection.updateOne(
@@ -89,8 +93,70 @@ async function run() {
       res.send(result);
     });
 
+    // user related apis
+    app.post("/users", async (req, res) => {
+      const users = req.body;
+      const result = await userCollection.insertOne(users);
+      res.send(result);
+    });
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find({}).toArray();
+      res.send(result);
+    });
+
+    app.get("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await userCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await userCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    app.put("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateUser = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const user = {
+        $set: {
+          name: updateUser.name,
+          email: updateUser.email,
+        }
+    };
+    const result = await userCollection.updateOne(
+      filter,
+      user,
+      options
+    );
+    res.send(result);
+  }),
+
+  app.patch("/users", async (req, res) => {
+    const updateUser = req.body;
+    const filter = {email: updateUser.email};
+    const options = { upsert: true };
+    const user = {
+      $set: {
+        lastSignInTime: updateUser.lastSignInTime
+      }
+    };
+    const result = await userCollection.updateOne(
+      filter,
+      user,
+      options
+    );
+    res.send(result);
+  }),
+
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
